@@ -1,5 +1,5 @@
-# rust-freertos
->freeRTOS implemented in rust
+# rust-freeRTos
+>freeRTos implemented in rust
 
 ## Description
 
@@ -7,13 +7,14 @@
 
 ## Usage
 
-## Contact
-
-## Licence
-[MIT](mit-licence.txt)
-
----
+## Contribute
+Feel free to fork & PR. I would truly appriciate that.
 
 ## Change Log
 time | description
   :-:|:-:
+## Licence
+[MIT](LICENCE-MIT.txt)
+---
+
+## Contact
