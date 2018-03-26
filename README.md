@@ -1,5 +1,5 @@
-# rust-freeRTos
->freeRTos implemented in rust
+# Amazon-freeRTos
+>Amazon FreeRTos implementation
 
 ## Description
 
