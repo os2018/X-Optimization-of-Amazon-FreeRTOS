@@ -2,7 +2,7 @@
 [English version](#English)
 # Amazon: FreeRTOS
 >A implementation of Amazon freertos with ecosystem.
-这是我们的[调研报告pdf版](src/调研报告)
+这是我们的[调研报告pdf版](src/调研报告.pdf)
 ## 为什么有它?
 
 ## 需要些什么?
