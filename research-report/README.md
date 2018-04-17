@@ -1,1 +1,2 @@
-[调研报告 pdf](../src/ 调研报告.pdf)
+This is our [research report](src/research-report.pdf) on Amazon-FreeRTOS  in format of pdf.
+
