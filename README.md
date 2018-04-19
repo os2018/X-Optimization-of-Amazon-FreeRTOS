@@ -1,42 +1,16 @@
 
-[English version](#english)
 # Amazon: FreeRTOS
->A implementation of Amazon freertos with ecosystem.
-这是我们的[调研报告pdf版](src/调研报告.pdf)
-## 为什么有它?
+>An implementation of Amazon freertos with ecosystem.
+[research report](src/research-report.pdf) in format of `pdf`
+## Group member
+* 邓浩巍
+* 方宇辰
+* 王梓涵
+* 朱河勤
 
-## 需要些什么?
+## Log
 
-## 怎么使用?
-
-## 未来的可能
-
-## 欢迎fork & PR
 
 ## LICENCE
-[MIT](LICENCE-MIT.txt)
-
-## 联系
-
----
----
-# English
-
-## Description
-
-## Requirement
-
-## Usage
-
-## Contribute
-Feel free to fork & PR. We would truly appriciate that.
-
-## Change Log
-time | description
-  :-:|:-:
-## Licence
 [MIT](LICENCE)
----
-
-## Contact
 
