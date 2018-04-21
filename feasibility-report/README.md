@@ -5,7 +5,7 @@
 <br>
 
 >在经过充分调研后，我们对 Amazon-FreeRTOS 有了足够的了解。下面进行可行性分析。
-分为几个方面：组员的能力，项目的内容，...
+分为几个方面：组员的能力，项目的内容(包括内存管理,任务调度等),创新点(引入协程)
 
 # 能力分析
 
@@ -63,7 +63,7 @@ Amazon-FreeRTOS 源代码相对较少，内核精简，对于我们来说，有�
  我们目前已经熟悉了 Amazon-FreeRTOS 的内存调度算法，发现简单的算法无法达到要求，能达到要求的算法较为复杂，在硬件上实现颇有难度。
  我们小组经过多次讨论与探究，决定精简一部分，实现在某些领域更实用，可靠的 Amazon-FreeRTOS 版本。
 
- ### FreeRTOS 内存管理优化的可行性分析
+### FreeRTOS 内存管理优化的可行性分析
 理论依据<br>
 FreeRTOS 现有的内存管理策略主要有一下问题：<br>
 
@@ -76,7 +76,7 @@ FreeRTOS 现有的内存管理策略主要有一下问题：<br>
 TLSF 算法使用隔离适应机制实现了一个最佳适应策略，原算法针对 4G 内存设计，即 32 位地址。为了加速访问空闲块同时管理一大组隔离链表，链表数组被分为两级管理。第一级将空闲内存块划分为若干个个区间，称为 FLI（First-level Segregated Fit）。第二级别 SLI（Second-level Segregated Fit）把第一级线性划分为 2SLI 个区间（SLI 是一个用户可配置参数）。两个级别各对应一个位图，用来标记对应内存是否为空，如果不空则有一个指针指向内存块，否则为空。
 为了更快地合并空闲块，TLSF 算法在每个内存块前面添加一小块“内存块报头”(block header)。对于空闲块，报头中含有块大小、物理上的前一块地址、前一个和后一个空闲块地址；对于已使用块，报头中含有块大小、物理上的前一块地址。因此每个空闲内存块被两个链表连接：1) 隔离链表：对应 SLI，将同一类的内存块连接起来和 2) 由物理地址排序的链表。这样只要给出某一内存块在第一、二级中的位置，通过连续两个指针可以直接访问到对应报头得到所有信息，如下图 1 所示。
 
-![](src.jpg)
+![](src/structure.jpg)
 
 为了实现 O(1) 时间的内存分配和回收，TLSF 使用 segregate list() 函数确定需求内存块位置。在第一级 FLI 中，内存区间按 2 的次幂排序，因此若用 mapping (size) → (f, s) 表示对应块在第一、二级数组中的位置，f =⌊log_2  (size)⌋  ，s=(size-2^f)2^SLI/2^f 。
 如果用上式找到了空闲内存，则返回，若无法找到，则找下一个比需求大的内存块。此操作由于采用位图搜索算法时间复杂度也为 O(1)。
@@ -133,3 +133,111 @@ Binary Buddy 四个算法的效果表 1。
  因此我们的打算修改 Amazon FreeRTOS 的代码，将任务抽调出内存的部分进行修改，比对上述两种方法的优劣性以选择最合适的一种，或者将两者结合，部分任务直接销毁，部分任务传递到其他芯片存储。
 
 ### 外围通讯库的改写
+
+
+# 协程(coroutine)
+## 协程的定义
+协程是通过允许多入口的停止与唤醒执行任务来产生子程序实现非抢占式多任务的计算机程序组件.[^1]
+子例程一般被认为是某个主程序的一部分代码,该代码执行特定的任务并且与主程序中的其他代码相对独立.
+
+## 协程的由来
+我们知道,进程是资源分配的单位. 进程的出现是为了更好的利用CPU资源使得并发成为可能.
+为了实现并发,出现多进程的概念. 然而进程的上下文切换开销较大,于是出现了线程.
+线程共享进程的大部分资源(比如文件),只有少数是独立拥有的,比如堆栈(实现函数调用,局部变量保存等功能),  寄存器.
+
+这样就大大减少了开销.突破了一个进程只能做一件事的缺点.
+
+然而,当涉及大规模的并发连接时,比如10k连接, 以线程作为处理单元, 系统调度的开销还是过大. 系统可能处于:
+```
+当连接数很多 —> 
+需要大量的线程来干活 —> 
+可能大部分的线程处于 ready 状态 —> 
+系统会不断地进行上下文切换。
+```
+
+既然性能瓶颈在上下文切换，那解决思路也就有了，在线程中自己实现调度，不陷入内核级别的上下文切换。这就是协程的功能
+
+## 优势比较
+最大的优势就是协程极高的执行效率。因为子程序切换不是线程切换，而是由程序自身控制，因此，没有线程切换的开销，和多线程比，线程数量越多，协程的性能优势就越明显。
+第二大优势就是不需要多线程的锁机制，因为只有一个线程，也不存在同时写变量冲突，在协程中控制共享资源不加锁，只需要判断状态就好了，所以执行效率比多线程高很多。
+因为协程是一个线程执行，那怎么利用多核 CPU 呢？最简单的方法是多进程 + 协程，既充分利用多核，又充分发挥协程的高效率，可获得极高的性能。
+
+与子例程比较,协程可以返回多次, 自己掌握控制流,在需要的地方挂起与恢复. 而子例程一旦开始,就一直执行到返回,值返回一次.
+并且协程具有状态,每一次唤醒可能具有不同的结果.
+
+## 举例说明
+一个生产者与消费者的例子如下,来自wiki[^1]
+
+```伪代码
+var q := new queue
+
+coroutine produce
+    loop
+        while q is not full
+            create some new items
+            add the items to q
+        yield to consume
+
+coroutine consume
+    loop
+        while q is not empty
+            remove some items from q
+            use the items
+        yield to produce
+```
+
+可以用python实现如下:
+```python  consumer-producer
+
+que=[]
+
+def consumer():
+    msg ='I am begin to consume'
+    while 1:
+        t = yield msg
+        print("@ Consumer recerived sig '{}'".format(t))
+        msg = 'Consumer has handled {}'.format(que)
+        if t=='begin':
+            while que:que.pop()
+        elif t == 'end':return 'Finish all work'
+        else:msg  = "Consumer doesn't know what '{}' means".format(t)
+
+def producer(csm,n=4):
+    csm.__next__()
+    ct=0
+    global que
+    while True:
+        while len(que)<4:
+            que.append(ct)
+            ct+=1
+        sig=''
+        if ct<12:sig = 'begin'
+        elif ct<13 :
+            que=[]
+            sig = 'hello'
+        else : sig ='end'
+        try:
+            fd = csm.send(sig)
+            print("# Producer got feed back: {}".format(fd))
+        except StopIteration as e:
+            print(e)
+            return 
+
+if __name__ =='__main__':
+    csm = consumer()
+    producer(csm)
+```
+
+这是执行结果
+
+![](src/coroutine.png)
+
+>`解释`
+
+有一个全局的队列,生产者通将任务放到队列中知道队列元素达到一定数目,然后发送信号(可以有不同的信号,对应不同的意义),
+通知消费者来处理, 然后转移程序控制权.
+消费者通过接收到的信号实现对应的操作, 如下图所示
+
+
+![](src/co.jpeg)
+
