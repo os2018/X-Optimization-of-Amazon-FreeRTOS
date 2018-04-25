@@ -167,19 +167,13 @@ Binary Buddy 四个算法的效果表 1。
 协程也是有缺点的，如果一个协程因为某种原因停止执行，则与之相关的协程都会停止执行。而进程由于资源是分隔开的，就不会出现这种现象的。
 
 
-<<<<<<< HEAD
-## 举例说明
+#### 举例说明
 一个生产者与消费者的例子如下，来自 wiki<sup><b>[2]</b></sup>
 
-### 伪代码
-```scala  生产者与消费者
-=======
-#### 举例说明
-一个生产者与消费者的例子如下，来自 wiki<sup><b>2</b></sup>
-
 ##### 伪代码
-```
->>>>>>> 432b03300723cc183fdfa4cc5d4d88e26a48bbae
+
+```scala  生产者与消费者
+
 var q := new queue
 
 coroutine produce
@@ -196,6 +190,7 @@ coroutine consume
             use the items
         yield to produce
 ```
+
 
 ##### python 实现如下：
 ```python  consumer-producer
