@@ -1,6 +1,6 @@
 <h1 style="color:red;align:center"> Amazon-FreeRTOS 可行性报告 </h1>
 
-<span style="align:center;color:blue"><b>作者：邓浩巍，方宇辰，王梓涵，朱河勤（字典序）</b></span>
+<span style="align:center;color:blue"><b>作者：朱河勤, 王梓涵, 邓浩巍，方宇辰</b></span>
 
 <br>
 
@@ -28,7 +28,7 @@ C 语言有一个突出的优点就是适合于多种操作系统，如 DOS、UN
 * `路径搜索`
 * ...
 
-我们组的成员都能用 c 语言写出一些项目，不像其他组用 rust, 要花额外的时间来学习。
+我们组的成员都能用 c 语言写出一些项目,不用花额外的时间来学习语言方面。
 这样我们就能将精力放在优化，提高 Amazon-FreeRTOS 在微控制器上的性能，作出更多的创新性工作。
 
 ## 资料
@@ -160,7 +160,7 @@ Binary Buddy 四个算法的效果表 1。
 ## 优势比较
 最大的优势就是协程极高的执行效率。因为子程序切换不是线程切换，而是由程序自身控制，因此，没有线程切换的开销，和多线程比，线程数量越多，协程的性能优势就越明显。
 第二大优势就是不需要多线程的锁机制，因为只有一个线程，也不存在同时写变量冲突，在协程中控制共享资源不加锁，只需要判断状态就好了，所以执行效率比多线程高很多。
-因为协程是一个线程执行，那怎么利用多核 CPU 呢？最简单的方法是多进程 + 协程，既充分利用多核，又充分发挥协程的高效率，可获得极高的性能。<sup><b>1</b></sup>
+因为协程是一个线程执行，那怎么利用多核 CPU 呢？最简单的方法是多进程 + 协程，既充分利用多核，又充分发挥协程的高效率，可获得极高的性能<sup><b>[1]</b></sup>.
 
 与子例程比较，协程可以返回多次，自己掌握控制流，在需要的地方挂起与恢复。而子例程一旦开始，就一直执行到返回，值返回一次。
 并且协程具有状态，每一次唤醒可能具有不同的结果。
@@ -168,10 +168,10 @@ Binary Buddy 四个算法的效果表 1。
 
 
 ## 举例说明
-一个生产者与消费者的例子如下，来自 wiki<sup><b>2</b></sup>
+一个生产者与消费者的例子如下，来自 wiki<sup><b>[2]</b></sup>
 
 ### 伪代码
-```
+```scala  生产者与消费者
 var q := new queue
 
 coroutine produce
@@ -252,6 +252,7 @@ if __name__ =='__main__':
 
 [1]: 进程，线程，协程与并行，并发 https://www.jianshu.com/p/f11724034d50
 
-[2]: wiki-corourine https://en.wikipedia.org/wiki/Coroutine
+[2]: wiki-coroutine https://en.wikipedia.org/wiki/Coroutine
 
+[3]: Modern operating system   by  Andrew S. Tanenbaum.
 
