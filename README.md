@@ -1,4 +1,4 @@
-# Optimizetion of Amazon-FreeRTOS
+# Optimization of Amazon-FreeRTOS
 
 ## 成员
 * 邓浩巍
