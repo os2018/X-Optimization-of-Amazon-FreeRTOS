@@ -1,7 +1,7 @@
 # Optimization of Amazon-FreeRTOS
 
 ## 成员
-* 邓浩巍
+* 邓皓巍
 * 方宇辰
 * 王梓涵
 * 朱河勤
