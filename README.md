@@ -9,16 +9,16 @@
 
 ## 文档
 
-* [调研报告 pdf](research-report/research-report.pdf) 
+* [调研报告 pdf](report-research/research-report.pdf) 
 
-* [可行性报告](feasibility-report/README.md)
+* [可行性报告](report-feasibility/README.md)
 
-* [中期展示 ppt](midterm-check/optimize-amazon-freertos.pptx)
+* [中期展示 ppt](report-midterm/optimize-amazon-freertos.pptx)
 
 ## 记录
 
 ### 2018-05-26
-
+内存管理相关代码已经上传, 包含了测试用例
 ### 2018-05-14
 
 汇报工作的进展
