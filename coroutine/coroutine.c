@@ -140,3 +140,35 @@ static void checkDelayed( void )
 	xLastTickCount = xCoRoutineTickCount;
 }
 
+
+static void initialize( void )
+{
+    /* 全部初始化工作 ,注意 与 listInit 的区别,后者只是对一个队列的初始化*/
+    UBaseType_t uxPriority;
+	for( uxPriority = 0; uxPriority < configMAX_CO_ROUTINE_PRIORITIES; uxPriority++ )
+	{
+		listInit( ( list * ) &( pReadyLists[ uxPriority ] ) );
+	}
+	listInit( ( list * ) &Delayed );
+	listInit( ( list * ) &Overflowed );
+	listInit( ( list * ) &pendingReadyList );
+
+	delayedList = &Delayed;
+	overflowedList = &Overflowed;
+}
+
+BaseType_t delEvent( const list *events )
+{
+    /* 将协程任务 从事件队列中去除*/
+    CRCB_t *pUnblked;
+
+	pUnblked = ( CRCB_t * ) getOwner( events );
+	( void ) listRemove( &( pUnblked->xEventListItem ) );
+	listAppendEnd( ( list * ) &( pendingReadyList ), &( pUnblked->xEventListItem ) );
+	if( pUnblked->uxPriority >= CUR->uxPriority )
+		return pdTRUE;
+	}else{
+		return pdFALSE;
+	}
+}
+#endif /* configUSE_CO_ROUTINES == 0 */
