@@ -77,3 +77,66 @@ void addDelayed( TickType_t DelayedTick, list *events )
 		listAppend( events, &( CUR->xEventListItem ) );
 	}
 }
+
+
+static void checkPending( void )
+{
+
+	while( listEmpty( &pendingReadyList ) == pdFALSE )
+	{
+		CRCB_t *pUnblked;
+		// 使用协程
+		portDISABLE_INTERRUPTS();
+		{
+			pUnblked = ( CRCB_t * ) getOwner( (&pendingReadyList) );
+			( void ) listRemove( &( pUnblked->xEventListItem ) );
+		}
+		portENABLE_INTERRUPTS();
+		( void ) listRemove( &( pUnblked->xGenericListItem ) );
+		prvAddCoRoutineToReadyQueue( pUnblked );
+	}
+}
+
+static void checkDelayed( void )
+{
+    CRCB_t *pxCRCB;
+	xPassedTicks = xTaskGetTickCount() - xLastTickCount;
+	while( xPassedTicks )
+	{
+		xCoRoutineTickCount++;
+		xPassedTicks--;
+		/* 如果 Tick 发生溢出, 交换 delayed 与 overflowed*/
+		if( xCoRoutineTickCount == 0 )
+		{
+			list * pxTemp;
+
+			pxTemp = delayedList;
+			delayedList = overflowedList;
+			overflowedList = pxTemp;
+		}
+
+		while( listEmpty( delayedList ) == pdFALSE )
+		{
+			pxCRCB = ( CRCB_t * ) getOwner( delayedList );
+			if( xCoRoutineTickCount < listGET_LIST_ITEM_VALUE( &( pxCRCB->xGenericListItem ) ) )
+			{
+				/* 超时了*/
+				break;
+			}
+            
+            // 使用宏定义的协程
+			portDISABLE_INTERRUPTS();
+			{
+				( void ) listRemove( &( pxCRCB->xGenericListItem ) );
+				if( pxCRCB->xEventListItem.pvContainer )
+				{
+					( void ) listRemove( &( pxCRCB->xEventListItem ) );
+				}
+			}
+			portENABLE_INTERRUPTS();
+			prvAddCoRoutineToReadyQueue( pxCRCB );
+		}
+	}
+	xLastTickCount = xCoRoutineTickCount;
+}
+
