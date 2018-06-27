@@ -6,6 +6,8 @@
 #define mtCOVERAGE_TEST_MARKER()
 #define traceMALLOC()
 #define xTaskResumeAll()
+#define portBYTE_ALIGNMENT_MASK 3
+#define portBYTE_ALIGNMENT 4
 /* Define the block header of free blocks. */
 typedef struct FREE_BLOCK_HEADER
 {
@@ -35,5 +37,5 @@ typedef struct assd {
 void *pvPortMalloc(size_t xWantedSize);
 void vPortFree(void *pv);
 void vPortDefineHeapRegions(const HeapRegion_t * const pxHeapRegions);
-int16_t LOG2(uint16_t _val);
-void vCheckAllBlocks(void);
+//int16_t LOG2(uint16_t _val);
+//void vCheckAllBlocks(void);

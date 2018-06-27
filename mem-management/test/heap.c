@@ -196,7 +196,7 @@ void *pvPortMalloc(size_t xWantedSize)
 		}
 	}
 #endif
-	printf("REAL SIZE:%d\n", pxBlockStartAddress->xBlockSize);
+//	printf("REAL SIZE:%d\n", pxBlockStartAddress->xBlockSize);
 	return pvReturn;
 }
 /*-----------------------------------------------------------*/
@@ -264,7 +264,7 @@ void vPortFree(void *pv)
 				{
 					pxBlockAfter->pxPrevPhysBlock = pxTargetBlock->pxPrevPhysBlock;
 				}
-				else
+				else if ((int8_t*)pxBlockAfter < pxHeapEnd)
 				{
 					printf("error!");
 				}
@@ -336,7 +336,7 @@ size_t xPortGetFreeHeapSize(void)
 
 size_t xPortGetMinimumEverFreeHeapSize(void)
 {
-	printf("BitMap: %d\n", *pxBitMap);
+//	printf("BitMap: %d\n", *pxBitMap);
 	return xMinimumEverFreeBytesRemaining;
 }
 /*-----------------------------------------------------------*/
@@ -399,11 +399,11 @@ void vCheckAllBlocks(void)
 	{
 		temp = Start;
 		Start = (FreeHeader_t*)((temp->xBlockSize&~3) + (int8_t*)temp);
-		printf("BLOCK:   ADDRESS:%x----SIZE:%d", temp, temp->xBlockSize&~3);
-		if ((temp->xBlockSize&xBlockTBit) != 0)
-			printf("  IN USE!\n");
-		else
-			printf("  FREE!\n");
+//		printf("BLOCK:   ADDRESS:%x----SIZE:%d", temp, temp->xBlockSize&~3);
+//		if ((temp->xBlockSize&xBlockTBit) != 0)
+//			printf("  IN USE!\n");
+//		else
+//			printf("  FREE!\n");
 		if (Start == pxHeapEnd)
 			return;
 		if ((Start->pxPrevPhysBlock) == temp)
