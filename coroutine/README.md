@@ -24,7 +24,8 @@ int demo()
                 ct++;
                 state = __LINE__;
                 return ct;
-                case __LINE__:;
+                case __LINE__:
+                dosomething();
             }
     }
 }
