@@ -1,5 +1,5 @@
 #include "FreeRTOS.h"
-#include "tak.h"
+#include "task.h"
 #include "croutine.h"
 #include "mylist.c"
 #define MAX_PRIORITY 100
@@ -15,7 +15,7 @@ static list  Delayed;  // 延时的协程队列
 static list Overflowed;  //   超时的
 static list* delayedList ;       
 static list* overflowedList;  
-CRCB_t * CUR = NULL;
+CRCB_t * pCurrentCoroutine = NULL;
 static UBaseType_t maxReadyPriority = 0;
 static TickType_t ctCur  = ctLast = ctPassed = 0;
 #define corINITIAL_STATE (0)  
@@ -24,7 +24,7 @@ static TickType_t ctCur  = ctLast = ctPassed = 0;
 //协程的编写, 使用宏, 使代码易于读懂, 而且节省代码量.
 //这里作用是将一个协程加入就绪队列, 首先判断 它的优先级是否高于规定的最大优先级, 如果高于, 则设为最大优先级
 #define AddReadyCoroutine (pxCRCB)  { if(pxCRCB -> uxPriority  > maxReadyPriority){maxReadyPriority = pxCRCB -> uxPriority ;} listAppend(( list*)&(pReadyLists[pxCRCB->uxPriority ] ),&(pxCRCB ->xGenericListItem)) ;} 
-static void pListInit(viod);
+static void pListInit(void);
 static void pCheckPendingList(void);
 static void pCheckDelayedList(void);
 BaseType_t addReady( crCOROUTINE_CODE code, UBaseType_t priority, UBaseType_t  index)
