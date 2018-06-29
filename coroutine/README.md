@@ -18,13 +18,14 @@ int demo()
 {
     static int ct =0;
     static STATE state = INIT;
-    switch(staate){
+    switch(state){
         case 0: 
             while(ct<10){
-                ct++;s
+                ct++;
                 state = __LINE__;
                 return ct;
-                case __LINE__:;
+                case __LINE__:
+                dosomething();
             }
     }
 }
