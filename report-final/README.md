@@ -4,8 +4,10 @@
 ## 内存管理
 ### FreeRTOS内存管理现状分析
 在FreeRTOS中，内存管理使用pvPortMalloc与vPortFree函数，函数原型如下：
-void*pvPortMalloc(size_txWantedSize);
-voidvPortFree(void*pv);
+```c
+void *pvPortMalloc(size_txWantedSize);
+void vPortFree(void*pv);
+```
 pvPortMalloc函数类似于c语言中的malloc函数，形参是调用者请求的内存大小，类型size_t是unsignedint的重定义。返回值为一个void型指针，指向申请到的起始地址。
 vPortFree函数类似于c语言中的free函数，释放掉由pv指向的一段空间。
 
@@ -55,6 +57,8 @@ TLSF 算法通过单链表管理从物理内存获取的不连续的内存区域
 #### 数据结构
 相对于TLSF，由于取消了二级数组，一级数组直接指向块头，数据块块头和原算法保持一致。
 具体来说，定义空闲块块头
+
+```c
 typedef struct FREE_BLOCK_HEADER
 {
 	uint16_t xBlockSize;									/* Block size. Include the header size. */
@@ -62,12 +66,15 @@ typedef struct FREE_BLOCK_HEADER
 	struct FREE_BLOCK_HEADER *pxNextFreeBlock;				/* The address of the next free block. */
 	struct FREE_BLOCK_HEADER *pxPrevFreeBlock;				/* The address of the previous free block. */
 }FreeHeader_t;
+```
 定义已使用块块头
+```c
 typedef struct USED_BLOCK_HEADER
 {
 	uint16_t xBlockSize;									/* Block size. Include the header size. */
 	struct FREE_BLOCK_HEADER *pxPrevPhysBlock;				/* The address of the block before this one. */
 }UsedHeader_t;
+```
 已用块的块头为空闲块块头的前两项，这能在访问前一个物理块时保持操作一致。同时为了保证字对齐，以4B为单位分配内存，xBlockSize后两位作为标志位，其中最后一位为1表示块已使用，第二位置0备用。
 一级数组FLI原型是FreeHeader_t[13]。对于FLI[i]所指向的空闲块，其大小应大于2i且小于2i+1。FLI[i]构成的空闲块的pxNextFreeBlock指向下一个符合大小要求的空闲块，因此一个FLI[i]就是一列空闲块链表。
 
@@ -94,6 +101,8 @@ vADDtoFLI是简单的链表操作，通过计算出FLI中的位置之后通过�
 进行100000次上述操作输出一次所用时间，单位ms，称之为一次循环。一共进行1000次循环。
 
 #### 测试结果
+![](test-result.png)
+
 从图上看，在随机测试下新算法的性能与heap_5基本相当。
 OLSF算法平均时间59.94ms，heap_5平均时间60.3ms；OLSF算法标准方差3.091，heap_5标准方差3.781。从统计学角度看OLSF算法平均时间低于heap_5。由于本测试使用Intel i5-6300HQ进行，如果在实际嵌入式系统中使用性能提高会比较明显。
 
@@ -104,3 +113,95 @@ FreeRTOS操作系统本身在win32环境下共申请空间36464B，操作系统�
 本部分基于已有的TLSF算法提出了一个新的OLSF算法并将之应用在了FreeRTOS中。OLSF算法通过O(1)时间复杂度的分配、释放操作，比现有FreeRTOS中最新的heap_5算法有略微性能上的提升，在空间利用方面，在正常使用的情况下，实际可用空间占比高于95%，基本可以接受。
 
 ## 协程调度
+使用协程来管理,执行任务,占空间更少, 协程切换开销更小.
+
+### 背景
+对于多数嵌入式系统来说, 内存都非常的少, 是很宝贵的资源. 平常的任务调度使用的中断和堆栈, 这在嵌入式设备中是不可能的. 因为每个人物函数都有自己的局部变量, 每一次切换人物都要保存状态,不仅内存不够, 而且在恢复时要恢复很多变量, 延迟而可能达不到高实时性. 
+
+
+### 协程原理
+协程可以使用很少的资源达到状态切换的功能. 
+
+下面是一个简单的例子
+```c
+#define INIT 0
+#define __LINE__ 1
+typedef STATE int;
+
+int demo()
+{
+    static int ct =0;
+    static STATE state = INIT;
+    switch(state){
+        case 0: 
+            while(ct<10){
+                ct++;
+                state = __LINE__;
+                return ct;
+                case __LINE__:
+                dosomething();
+            }
+    }
+}
+```
+这里利用了 switch 的跳转功能, 通过设置状态可以达到切换的效果.
+
+这里只需要两个静态变量的内存开销,就能实现上下文的切换, 可以节省很大的内存.
+静态变量是必需的, 用来记住上一次的状态, 以及传递的数据(这里简单的传递 `ct`)
+
+### 封装
+直接在代码上体现协程, 可能难于理解. 所以通过宏, 来代码替换,进行封装
+
+上面的代码可以改成这样, 一样的效果
+
+```c
+#define INIT 0
+#define __LINE__ 1
+typedef STATE int;
+
+#define BEGIN()  static int ct=0; switch(state){ case 0;
+#define YIELD(i)   {state=__LINE__ ;  return i; case __LINE__:;}
+#define END() }
+
+int demo()
+{
+    static int i=0;
+    BEGIN();
+    while(i<10) YIELD(i);
+    END();
+}
+```
+这里只有一个 _____LINE__状态 做了事.
+如果有其他任务, 可以一直增加其他状态, 这样对应就是一个很长的函数而已, 这个函数中途会返回,但是返回之后再次进入函数的时候, 会接着在上次的地方继续执行.
+
+### 功能实现
+#### 初始化
+首先初始化管理协程的链表, 按照优先级顺序.
+然后初始化 一个 延时任务列表, 一个超时任务列表
+#### 创建协程
+当创建一个协程时, 将所需的参数传给创建函数, 包括 协程编号, 优先级, 任务函数的指针
+
+这是任务结构体
+```c
+typedef struct corCoRoutineControlBlock
+{
+	crCOROUTINE_CODE 	pxCoRoutineFunction;
+	ListItem_t			xGenericListItem;  //列表项, 用来存放 ready, block 状态的协程控制块	
+	ListItem_t			xEventListItem;	  // 列表项, 用来存放事件	
+	UBaseType_t 		uxPriority;		// 优先级
+	UBaseType_t 		uxIndex;		//编号
+	uint16_t 			uxState;	    // 状态
+} CRCB_t;
+```
+#### 延迟队列
+在当前任务执行后, 计算将来多久会唤醒改任务(通过分配的 Tick), 然后从就绪与阻塞队列中移除
+
+如果唤醒时间小于当前时间,  那么将它加入到超时任务列表中, 否则加入延迟任务列表
+#### 检查任务
+* 检测是否有任务应移动到就绪队列. 如果等待移动到就绪任务队列不为空, 就关闭中断. 然后获得其任务块,从事件列表中移除.
+* 检查延迟列表.  计算两次间隔调度的时间差, 然后根据时间差遍历所有的 协程, 如果延时就加入延时队列.  如果 Tick 计数器溢出了, 就交换两个延迟队列. 否则一直遍历.
+#### 协程调度
+如果有基于事件驱动的任务, 则将其移动到就绪队列. 然后检查是否有延时的任务已经到了该执行的时候. 
+如果就绪队列不为空, 那么就取就绪队列中优先级最高的任务执行
+
+
