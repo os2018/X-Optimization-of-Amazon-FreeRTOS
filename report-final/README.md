@@ -1,5 +1,9 @@
 # 结题报告
 我们的项目工作是对 Amazon-FreeRTOS 的优化. 包括使用新算法实现内存管理机制达到节省时间的目的, 以及使用协程来完成任务调度, 达到减少时间的消耗以及节省内存开销的目的.
+## 完成代码
+[优化内存调度算法](https://github.com/OSH-2018/X-Optimization-of-Amazon-FreeRTOS/tree/master/mem-management)<br>
+[基于协程的任务调度优化](https://github.com/OSH-2018/X-Optimization-of-Amazon-FreeRTOS/tree/master/coroutine)<br>
+
 ## 如何使用我们编写的代码
 我们总共编写了heap_6.c和coroutine.c两个文件，如果要使用还需要在某些头文件内做一些宏定义进行修改以符合各种参数，以及将这两个文件包含进来，使用方法参见 [heap_6.c和coroutine.c使用方法](https://github.com/OSH-2018/X-Optimization-of-Amazon-FreeRTOS/blob/master/report-final/how%20to%20use.md) <br>
 ## 内存管理
