@@ -37,5 +37,7 @@ typedef struct assd {
 void *pvPortMalloc(size_t xWantedSize);
 void vPortFree(void *pv);
 void vPortDefineHeapRegions(const HeapRegion_t * const pxHeapRegions);
-//int16_t LOG2(uint16_t _val);
-//void vCheckAllBlocks(void);
+#ifdef I_AM_NEW_HEAP
+int16_t LOG2(uint16_t _val);
+void vCheckAllBlocks(void);
+#endif

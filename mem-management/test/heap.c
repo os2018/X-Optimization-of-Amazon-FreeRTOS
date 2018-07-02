@@ -1,3 +1,4 @@
+#define I_AM_NEW_HEAP
 #include <stdlib.h>
 #include <test.h>
 FreeHeader_t *pxHeapStart = NULL;
