@@ -9,11 +9,9 @@ static List_t * pxDelayedCoRoutineList;									// 延时的协程队列
 static List_t * pxOverflowDelayedCoRoutineList;							//   超时的
 static List_t xPendingReadyCoRoutineList;								// 待 ready 的, 这些协程不能直接放到 ready 队列, 因为他们不能中断
 
-
 CRCB_t * pxCurrentCoRoutine = NULL;
 static UBaseType_t uxTopCoRoutineReadyPriority = 0;
 static TickType_t xCoRoutineTickCount = 0, xLastTickCount = 0, xPassedTicks = 0;
-
 
 /* 初始化状态
  *协程的编写, 使用宏, 使代码易于读懂, 而且节省代码量.
@@ -235,6 +233,3 @@ BaseType_t xReturn;
 
 	return xReturn;
 }
-
-#endif /* configUSE_CO_ROUTINES == 0 */
-
