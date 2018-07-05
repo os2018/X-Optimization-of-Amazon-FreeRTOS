@@ -1,7 +1,7 @@
 # 文件使用方法
 
 ## heap_6.c
-将heap_6.c文件放到FreeRTOS内核下的 FreeRTOSv10.0.1\FreeRTOS\Source\portable\MemMang 目录下，并删除或在其他地方备份heap_5.c文件，并在使用FreeRTOS时对main.c和list.h做以下增添<br>
+将heap_6.c文件放到FreeRTOS内核下的 FreeRTOSv10.0.1\FreeRTOS\Source\portable\MemMang 目录下，并删除或在其他地方备份heap_5.c文件，并在使用FreeRTOS时对main.c和FreeRTOSConfig.h做以下增添<br>
 ```c
 * In main.c:
 static void  prvInitialiseHeap( void ){
