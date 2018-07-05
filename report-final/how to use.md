@@ -22,7 +22,7 @@ static void  prvInitialiseHeap( void ){
 ```
 
 ## coroutine.c
-用该文件替换 FreeRTOSv10.0.1\FreeRTOS\Source 目录下的croutine.c文件即可。<br>
+将该文件放入 FreeRTOSv10.0.1\FreeRTOS\Source 目录下，并在在使用时将该文件加入所建工程，参照官网的指示将对应的宏参数替换，使该文件作为调度文件。<br>
 <br>
 <br>
 除了以上改变以外，其他FreeRTOS的使用方法与普通FreeRTOS并无区别，参见FreeRTOS官网<br>
