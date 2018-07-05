@@ -272,7 +272,7 @@ void schedule( void ){
 }
 ```
 ### 实例
-可以参考一个我们自行编写的运用协程简单调度的实例 [实例](example.c)
+可以参考一个我们自行编写的运用协程简单调度的实例[代码](example.c)
 ```c
 #include "FreeRTOS.h"
 #include "task.h"
