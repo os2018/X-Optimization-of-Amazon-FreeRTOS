@@ -271,6 +271,71 @@ void schedule( void ){
 	return;
 }
 ```
+### 实例
+可以参考一个我们自行编写的运用协程简单调度的实例 [实例](example.c)
+```c
+#include "FreeRTOS.h"
+#include "task.h"
+#include "croutine.h"
+/*实例代码中，Task1,Task2为主任务，vFlashCoRoutine为设想中的次要的周期任务*/
+void vApplicationIdleHook(void)
+{
+	vCoRoutineSchedule();
+}
+static void vTask1(void *pvParameters)
+{
+	portTickType xLastWake;
+	xLastWake = xTaskGetTickCount();
+	for (;; )
+	{
+		printf("Hello T1!");
+		vTaskDelayUntil(&amp; xLastWake, (3000 / portTICK_RATE_MS));
+	}
+}
+static void vTask2(void *pvParameters)
+{
+	portTickType xLastWakeTime;
+	xLastWakeTime = xTaskGetTickCount();
+	for (;; )
+	{
+		printf("Hello T2!");
+		vTaskDelayUntil(&amp; xLastWake, (1000 / portTICK_RATE_MS));
+	}
+}
+void vFlashCoRoutine(CoRoutineHandle_t xHandle, UBaseType_t uxIndex)
+{
+	crSTART(xHandle);
+	for (;; )
+	{
+		if (uxIndex == 0)
+		{
+			printf("flash0\r\n");
+			crDELAY(xHandle, 500);
+		}
+		else if (uxIndex == 1)
+		{
+			printf("flash1\r\n");
+			crDELAY(xHandle, 1000);
+		}
+	}
+	crEND();
+}
+int main(void)
+{
+	xTaskCreate(vTask1, (const char *) "vTask1", 1000, NULL, 1, NULL);
+	xTaskCreate(vTask2, (const char *) "vTask2", 1000, NULL, 1, NULL);
+	xCoRoutineCreate(vFlashCoRoutine, 0, 0);
+	xCoRoutineCreate(vFlashCoRoutine, 0, 1);
+	vTaskStartScheduler();
+	for (;;);
+}
+```
+该实例主要是以下效果<br>
+①及时型任务。这类任务是事件触发型的，一旦事件发生，系统必须在限定的时间内进行响应，对这类任务，最自然的方法就是使用中断来完成，即定义成“前后台方式”中的后台任务。<br>
+
+②周期型任务。这类任务是时间触发式周期型的，系统必须保证在指定的周期内执行任务，“时间触发编程模式”可以很好地满足这类任务的需求。<br>
+
+③背景型任务。这类任务是非实时型的，实时性不是非常重要，系统在运行过程中可随时中断这类任务以便执行前两类任务，系统只要能充分利用资源尽最大可能快速完成这类任务即可，这类任务最适合定义成“前后台方式”中的前台任务。<br>
 
 #### 协程效果
 协程在单核运行模式下运行路径极其类似于多线程，但是所有协程运行在同一个线程中，共用同一个堆栈，而不像多线程需要为每一个线程分配堆栈。内核为每条线程分配内存时因为分配大小不易改变，因此必须分配一个相对较大的堆栈保证运行，不可避免的会浪费空间，同时维持线程间切换也需要更多资源。而协程因为运行在一条线程中就不存在这个问题。<br>
