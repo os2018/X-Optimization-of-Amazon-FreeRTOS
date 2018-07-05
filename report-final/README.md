@@ -190,7 +190,18 @@ int demo()
 #### 初始化
 首先初始化管理协程的链表, 按照优先级顺序.
 然后初始化 一个 延时任务列表, 一个超时任务列表<br>\
-即总共三个队列
+即总共三个队列，下面是创建队列和初始化一些指针
+```c
+static list pReadyLists[MAX_PRIORITY]; // 协程队列, 处于 ready 状态, 有不同优先级
+static list pendingReadyList;   // 待 ready 的, 这些协程不能直接放到 ready 队列, 因为他们不能中断
+static list  Delayed;  // 延时的协程队列
+static list Overflowed;  //   超时的
+static list* delayedList ;       
+static list* overflowedList;  
+CRCB_t * pCurrentCoroutine = NULL;
+static UBaseType_t maxReadyPriority = 0;
+static TickType_t ctCur  = ctLast = ctPassed = 0;
+```
 #### 创建协程
 当创建一个协程时, 将所需的参数传给创建函数, 包括 协程编号, 优先级, 任务函数的指针
 
@@ -206,15 +217,38 @@ typedef struct corCoRoutineControlBlock
 	uint16_t 			uxState;	    // 状态
 } CRCB_t;
 ```
-创建协程后根据用户指定的算法算出优先度，加入到初始化的按照优先度排列的队列链表，整体使用时间片轮询调度。每个协程（一般是一个类似于上面c语言例子的函数）依次运行，运行了时间片后通过静态变量保存运行进度，返回控制权。
-
+创建协程后根据用户指定的算法算出优先度，加入到初始化的按照优先度排列的队列链表，整体使用时间片轮询调度。每个协程（一般是一个类似于上面c语言例子的函数）依次运行，运行了时间片后通过静态变量保存运行进度，返回控制权。加入队列使用宏定义封装完成
+```c
+#define AddReadyCoroutine (pxCRCB)  { if(pxCRCB -> uxPriority  > maxReadyPriority){maxReadyPriority = pxCRCB -> uxPriority ;} listAppend(( list*)&(pReadyLists[pxCRCB->uxPriority ] ),&(pxCRCB ->xGenericListItem)) ;} 
+```
 #### 延迟队列
 在当前任务执行后, 计算将来多久会唤醒改任务(通过分配的 Tick), 然后从就绪与阻塞队列中移除
-
+```c
+void addDelayed( TickType_t DelayedTick, list *events )
+{
+    TickType_t WakeTick;
+	WakeTick = xCoRoutineTickCount + DelayedTick;
+	( void ) listRemove( ( item * ) &( CUR->xGenericListItem ) );
+	/* 按唤醒时间排序插入 */
+	setValue( &( CUR->xGenericListItem ), WakeTick );
+	if( WakeTick < xCoRoutineTickCount ){
+		//这种情况发生溢出, 将其加入溢出队列
+		listAppend( ( list * ) overflowedList, ( item * ) &( CUR->xGenericListItem ) );
+	}else{
+		//否则加入延迟队列
+		listAppend( ( list * ) delayedList, ( item * ) &( CUR->xGenericListItem ) );
+	}
+	if( events ){
+		/* 如果有事件, 则加入事件队列*/
+		listAppend( events, &( CUR->xEventListItem ) );
+	}
+}
+```
 如果唤醒时间小于当前时间,  那么将它加入到超时任务列表中, 否则加入延迟任务列表
 #### 检查任务
 * 检测是否有任务应移动到就绪队列. 如果等待移动到就绪任务队列不为空, 就关闭中断. 然后获得其任务块,从事件列表中移除.
-* 检查延迟列表.  计算两次间隔调度的时间差, 然后根据时间差遍历所有的 协程, 如果延时就加入延时队列.  如果 Tick 计数器溢出了, 就交换两个延迟队列. 否则一直遍历.
+* 检查延迟列表.  计算两次间隔调度的时间差, 然后根据时间差遍历所有的 协程, 如果延时就加入延时队列.  如果 Tick 计数器溢出了, 就交换两个延迟队列. 否则一直遍历.<br>
+以上操作见代码内的函数
 #### 协程调度
 如果有基于事件驱动的任务, 则将其移动到就绪队列. 然后检查是否有延时的任务已经到了该执行的时候. 
 如果就绪队列不为空, 那么就取就绪队列中优先级最高的任务执行
